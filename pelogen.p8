@@ -404,7 +404,7 @@ end
 -->8
 --pelogen lowpoly editor
 --@shiftalow/bitchunk
---ver 0.2.2
+--ver 0.2.3
 function _init()
 menuitem(1,'play',function(v,i)
 
@@ -451,12 +451,12 @@ vdist=4
 prsp=4
 xyz=htbl[[x y z]]
 rada=htbl[[{1 0 0}{0 1 0}{0 0 1}]]
-vfilti=1
+vfilti=2
 //1 face, 2 line, 4 vertex
-vfiltp=htbl[[0x7 0x1 0x2 0x4]]
-vfilt=vfiltp[1]
+vfiltp=htbl[[0x1 0x7 0x2 0x4]]
+vfilt=vfiltp[vfilti]
 --eface=true
-
+rolled=true
 sizc=htbl[[15=3; 6=1; 1=0; 0=-1; 10=1;]]
 kmap=htbl[[{-1 0} {1 0} {0 -1} {0 1}]]
 wasd=htbl[[a d w s]]
@@ -478,6 +478,13 @@ vtxs={}
 
 genab=htbl[[x=true;y=true;z=true;]]
 gedef=htbl[[x=false;y=false;z=false;]]
+lsc=htbl'x{0x28 0x12}y{0x3b 0x13}z{0xdc 0x1d}'
+lsci={}
+tmap(lsc,function(v,i)
+tmap(v,function(v)
+lsci[v]=i
+end)
+end)
 
 rfpt={}
 rfp=tmap(split('8 9 10 11 12 13 14 15'),function(i)
@@ -514,7 +521,25 @@ rotful=64
 scsize=128
 
 tliw=0
-
+llcnt=0
+llpat=htbl[[
+{0 3 ████}
+{0 2 ░███}
+{0 1 ░░██}
+{0 0 ░░░█}
+{3 3 █░░░}
+{2 3 ██░░}
+{1 3 ███░}
+{1 2 ░██░}
+]]
+lfrom,lto,lltxt=unpack(llpat[llcnt+1])
+--{2 2 ░░█░}
+--{1 1 ░█░░}
+--{0 0 █░░░}
+--{0 1 ██░░}
+--{1 2 ░██░}
+--llen=4
+--llst=0
 --ffnc=rectfill
 textured=nil
 txrx=16
@@ -599,13 +624,13 @@ textured=false
 rfpt,rfp=rfp,rfpt
 pal()
 
+--base params
 local msk=0xffff
 local qv=vradq({orot.x,orot.y,orot.z},1/128)
 --local qv=vradq({rview.x,rview.y,rview.z,orot.x,orot.y,orot.z},1/128)
 local zr=8*64+prsp
 local wz=view.z+prsp
---local zr=64/wz
-//(8*64+prsp)/(view.z-z+prsp)*y+view.y
+
 --**draw glid**
 fillp(0xcc33.8)
 --clickp={x={},y={},z={}}
@@ -616,7 +641,7 @@ for i=max(opos.y-2,minpos),min(opos.y+2,7) do
 local x=0
 local y=genab.z and opos.y or i
 local z=genab.z and i-opos.y+opos.z or opos.z
-line3(7+x,y,z,minpos+x,y,z,qv,c)
+--line(unpack({line3(7+x,y,z,minpos+x,y,z,qv,c)},5))
 end
 end
 if genab.y then
@@ -624,7 +649,7 @@ for i=max(opos.x-2,minpos),min(opos.x+2,7) do
 local x=genab.z and opos.x or i
 local y=0
 local z=genab.z and i-opos.x+opos.z or opos.z
-line3(x,7+y,z,x,minpos+y,z,qv,c)
+--line(unpack({line3(x,7+y,z,x,minpos+y,z,qv,c)},5))
 end
 end
 if genab.z then
@@ -633,33 +658,25 @@ for i=max(st-2,minpos),min(st+2,7) do
 local x=genab.x and i or opos.x
 local y=genab.y and i or opos.y
 local z=genab.x and 0 or 0
-line3(x,y,7+z,x,y,minpos+z,qv,c)
+--line(unpack({line3(x,y,7+z,x,y,minpos+z,qv,c)},5))
 end
 end
 
-fillp(not genab.x and msk)
---local l1={line3(7,opos.y,opos.z,minpos,opos.y,opos.z,qv,0x28)}
-local lx1={line3(7,opos.y,opos.z,0,opos.y,opos.z,qv,0x28)}
-local lx2={line3(minpos,opos.y,opos.z,0,opos.y,opos.z,qv,0x12)}
-fillp(not genab.y and msk)
---local l2={line3(opos.x,7,opos.z,opos.x,minpos,opos.z,qv,0x3b)}
-local ly1={line3(opos.x,7,opos.z,opos.x,0,opos.z,qv,0x3b)}
-local ly2={line3(opos.x,minpos,opos.z,opos.x,0,opos.z,qv,0x13)}
-fillp(not genab.z and msk)
---local l3={line3(opos.x,opos.y,7,opos.x,opos.y,minpos,qv,0x1c)}
-local lz1={line3(opos.x,opos.y,7,opos.x,opos.y,0,qv,0xdc)}
-local lz2={line3(opos.x,opos.y,minpos,opos.x,opos.y,0,qv,0x1d)}
-fillp()
---local lo={line3(opos.x,opos.y,opos.z,opos.x,opos.y,opos.z,qv,0x100)}
+local lx1={line3(7,opos.y,opos.z,0,opos.y,opos.z,qv,lsc.x[1])}
+local lx2={line3(minpos,opos.y,opos.z,0,opos.y,opos.z,qv,lsc.x[2])}
+local ly1={line3(opos.x,7,opos.z,opos.x,0,opos.z,qv,lsc.y[1])}
+local ly2={line3(opos.x,minpos,opos.z,opos.x,0,opos.z,qv,lsc.y[2])}
+local lz1={line3(opos.x,opos.y,7,opos.x,opos.y,0,qv,lsc.z[1])}
+local lz2={line3(opos.x,opos.y,minpos,opos.x,opos.y,0,qv,lsc.z[2])}
 local lo={line3(0,0,0,0,0,0,qv,0x100)}
-
 local x1,y1,z1=lpos.x+64,lpos.y+64,lpos.z
 
+local cuv=min(#vtxs,vtxsl)
 --**line draw mode*
 --local vs,vt=objdraw({vt=vtxs})
 local vs,vt=objrot({vt=vtxs})
 local pv={{x1,y1,z1,7},lo,lx2,ly2,lz2,lx1,ly1,lz1}
-local filv={}
+local filv,ctri={},{}
 cvtxs={}
 cvtx=0
 --stop()
@@ -669,6 +686,7 @@ local pv=bmch(vfilt,0)
  and cat(pv,vs)
  or {}
 -- cursor(0,40)
+local tcol,tcol2=toc(time()*20,4)%4*4,toc(time()*20,4)%2*4
 tmap(pv,function(v,i)
 v.s=v[3]
 end)
@@ -693,27 +711,35 @@ fillp()
 add(cvtxs,v)
 if inrng(v.i,vtxsl,vtxsl+vtxsll) then
 --circfill(x1,y1,2,v.i==vtxsl and lshr(lpal[v[4]],toc(time()*20,4)%4*4) or 11)
-add(filv,{x1,y1,2,lshr(lpal[v.i==vtxsl and v[4] or v[4]],toc(time()*20,4)%4*4) or 11})
+add(filv,{x1,y1,2,lshr(lpal[v.i==vtxsl and v[4] or v[4]],tcol) or 11})
 end
-if v.i==#vtxs and #vtxs>1 then
-local p=vt[v.i-1]
-local z2=zr/(view.z-p[3]+prsp)
-line(x1,y1,p[1]*z2+view.x,p[2]*z2+view.y,
-(v.i<3 or v.i%2==0) and 11 or 12)
-end
+--if v.i==#vtxs and #vtxs>1 then
+--local p=vt[v.i-1]
+--local z2=zr/(view.z-p[3]+prsp)
+--line(x1,y1,p[1]*z2+view.x,p[2]*z2+view.y,
+--(v.i<3 or v.i%2==0) and 11 or 12)
+--end
 if bmch(4,vfilt,1) then
-circ(x1,y1,2,v.t and 12 or lshr(lpal[v[4]],toc(time()*20,4)%2*4))
+circ(x1,y1,2,v.t and 12 or lshr(lpal[v[4]],tcol2))
 end
-elseif #v>8 then
+if cuv==v.i and vtxsll==0 and vtxsl>#vtxs then
+ctri=vtxsl&1==0
+ and {v,vt[v.i-1]}
+  or {vt[v.i-1],v}
+end
+elseif vfilt~=0x1 and #v>8 then
+if genab[lsci[v[4]]] then
 fillp()
---axis pin
---if bmch(vfilt,2) then
+else
+fillp(0x36c9.8)
+end
 line(unpack(v,5))
 --end
 if v[4]<0x20 then
 rectfill(v[5]-1,v[6]-1,v[5]+1,v[6]+1,v[4])
 end
-elseif v[4]==7 then
+fillp()
+elseif vfilt~=0x1 and v[4]==7 then
 --lightsource?
 fillp(0xebeb.8)
 line(v[1],v[2],64,64,0x7)
@@ -722,6 +748,7 @@ fillp()
 end
 --pre=v
 end)
+fillp()
 tmap(filv,function(v)
 local x,y,r,c=unpack(v)
 circfill(x,y,r,c)
@@ -731,8 +758,33 @@ v=cubr
 pfnc=circ
 
 local q,vx,vy,vz=vrolq({0,opos.x,opos.y,opos.z},qv)
-local z1=zr/(view.z-vz+prsp)
-circ(vx*z1+view.x,vy*z1+view.y,sin(time())*2+4,lshr(lpal[15],toc(time()*20,4)%4*4))
+local zr=zr/(view.z-vz+prsp)
+
+if not ctri[3] then
+add(ctri,{vx,vy,vz,vcol},1)
+end
+if vfilt~=0x1 then
+if bmch(2,vfilt,1) and ctri[3] then
+--local c=min(#vtxs,vtxsl)
+--local p1,p2,p3={vx,vy,vz}
+--,vtxs[c]
+--,vtxs[c-1]
+--vdmp(ctri)
+local v1,v2,v3=unpack(ctri)
+local x1,y1,z1=unpack(v1)
+local x2,y2,z2=unpack(v2)
+local x3,y3,z3=unpack(v3)
+color((x2-x1)*(y3-y1)-(x3-x1)*(y2-y1)<0 and v1[4] or lshr(lpal[v1[4]],8))
+fillp(((0x36c9<<>time()*8)&0xffff)+0x.8)
+--fillp(0x1248.8)
+line(v3[1]*zr+view.x,v3[2]*zr+view.y,v1[1]*zr+view.x,v1[2]*zr+view.y)
+tmap(ctri,function(v)
+line(v[1]*zr+view.x,v[2]*zr+view.y)
+end)
+end
+fillp()
+circ(vx*zr+view.x,vy*zr+view.y,sin(time())*2+4,lshr(lpal[15],tcol))
+end
 rectfill(0,120,127,127,0)
 for x=0,15 do
 fillp()
@@ -745,13 +797,15 @@ pset(1,121,5)
 pal(7,vcol)
 rect(vcol*8,120,vcol*8+8,127,lpal[vcol])
 pal()
-local c=band(lpal[vcol],0xf)
---eachpal('56dbc8$',(#vtxs<3 or vtxsl%2==1) and 'b0bb0'..c or '0cc0c'..c)
-pal(mkpal('56dbc8$',(#vtxs<3 or vtxsl%2==1) and 'b0bb0'..c or '0cc0c'..c))
-spr(spid,mo.x-3,mo.y-3)
+--local c=band(lpal[vcol],0xf)
+--pal(mkpal('56dbc8$',(#vtxs<3 or vtxsl%2==1) and 'b0bb0'..c or '0cc0c'..c))
+pal(15,lshr(lpal[vcol],tcol2+4))
+pal(7,lshr(lpal[vcol],tcol2+8))
+pal(14,lpal[vcol])
+spr(spid,mo.x-3,mo.y-2)
 local v=vtxs[vtxsl] or vtxs[vtxsl-1]
 if v then
-outline(v.i,join({mo.x,mo.y+5,5,7},' '))
+outline(v.i,join({mo.x,mo.y+5,14,15},' '))
 end
 pal()
 
@@ -765,7 +819,7 @@ dbg('🅾️ '..join({flr(orot.x),flr(orot.y),flr(orot.z)},' '))
 dbg('✽ '..join({lpos.x,lpos.y,lpos.z},' '))
 --dbg('o:'..join({orot.x,orot.y,orot.z},' '))
 --dbg(stat(1))
-
+?lltxt,96,0,7
 
 end
 function edt_k(o)
@@ -775,7 +829,8 @@ local x,y
 ,cos(orot.x%rothlf/rothlf)>0
 --=inrng(sgn(orot.x)*orot.x%64,-16,16)
 --,inrng(sgn(orot.y)*orot.y%64,-16,16)
-genab.x=x and 1 or not y and -1
+--genab.x=x and 1 or not y and -1
+genab.x=x or not y
 genab.y=y or not x and y
 genab.z=not(genab.y and genab.x)
 if keystate.x or keystate.c or keystate.z then
@@ -999,10 +1054,9 @@ backvtxs()
 --	v.p=vtxs[v.i-1]
 	end)
 end
-if mo.mdb then
-cpals=(cpals+1)%3
---cpalid=cpalid==16 and 17 or 16
-lpal_i(cpalid+cpals)
+--cpals=(cpals+1)%3
+--lpal_i(cpalid+cpals)
+
 end
 
 end
@@ -1084,6 +1138,7 @@ end
 if mo.r and chold then
 
 --**rotate view**
+rolled=true
 spid=2
 dragstart(orot)
 dragstart(rview)
@@ -1195,10 +1250,17 @@ vtxs,vtxsb=vtxsb,vtxs
 end
 
 if keytrg["\t"] then
-vfilt=vfiltp[vfilti]
 vfilti=vfilti%#vfiltp+1
+vfilt=vfiltp[vfilti]
 --eface=not eface
 end
+if mo.mdb then
+if keystate[' '] then
+llcnt=llcnt+#llpat-1&0x7
+else
+llcnt=llcnt+1&0x7
+end
+lfrom,lto,lltxt=unpack(llpat[llcnt+1])
 
 --obj.rt=orot
 --obj.vt=vtxs
@@ -1207,16 +1269,19 @@ end
 function sc_d(o)
 cls(bgcol)
 orot.y+=0.5
-objdraw(objrot({vt=btmr}))
+objdraw(objrot({vt=vtxs}))
+--?lltxt,96,0,7
 end
 function sc_k(o)
 if o.fst then
 oscl.w=1
 oscl.h=1
 end
+--oscl.w=8
+--oscl.h=8
 
-oscl.w=1+(mo.x-mo.sx)/128*8
-oscl.h=1+(mo.y-mo.sy)/128*8
+--oscl.w=1+(mo.x-mo.sx)/128*8
+--oscl.h=1+(mo.y-mo.sy)/128*8
 
 if not keystate.█ then
 tmap(kmap,function(v,i)
@@ -1408,7 +1473,9 @@ end)
 --dbg(stat(1))
 isdebug=true
 --dbg(bmch(vfilt,3,1))
---dbg(vfilt)
+--dbg(vtxsl)
+--dbg(vcol)
+--dbg(llcnt)
 dbg_print()
 end
 
@@ -1655,7 +1722,8 @@ function vradq(v,s)
 --return tmap(cat(v,{rview.x,rview.y,rview.z}),function(a,i)
 return tmap(v,function(a,i)
 i=(i-1)%3+1
-return radq(a*s,{normalize(rada[i],1)})
+return radq(a*s,normalize(rada[i][1],rada[i][2],rada[i][3]))
+--return radq(a*s,{normalize(rada[i],1)})
 end)
 
 end
@@ -1781,9 +1849,9 @@ end
 function rolq(r1,r2,r3,r4,q1,q2,q3,q4)
 return qprd(r1,-r2,-r3,-r4,qprd(q1,q2,q3,q4,r1,r2,r3,r4))
 end
-function rtfp(r)
-return rfp[mid(1,8,flr(r*100)-8)]
-end
+--function rtfp(r)
+--return rfp[mid(1,8,flr(r*100)-8)]
+--end
 function light(c,r)
 local s=mid(r*3,0,3)
 return band(lshr(c,flr(s)*4),0xff),rfp[mid(1,8,flr(band(s,0x.ffff)*7)+1)]
@@ -1971,28 +2039,30 @@ end
 function rolq(r1,r2,r3,r4,q1,q2,q3,q4)
 return qprd(r1,-r2,-r3,-r4,qprd(q1,q2,q3,q4,r1,r2,r3,r4))
 end
-function rtfp(r)
-return rfp[mid(1,8,flr(r*100)-8)]
-end
+--function rtfp(r)
+--return rfp[mid(1,8,flr(r*100)-8)]
+--end
 function light(c,r)
-local s=mid(r*3,0,3)
-return band(lshr(c,flr(s)*4),0xff),rfp[mid(1,8,flr(band(s,0x.ffff)*7)+1)]
+local s=mid(r*4,lfrom,lto)
+return c>>>flr(s)*4&0xff,rfp[mid(1,8,flr((s&0x.ffff)*7)+1)]
+--return band(lshr(c,flr(s)*4),0xff),rfp[mid(1,8,flr(band(s,0x.ffff)*7)+1)]
 end
-
-
-
 
 function dot(v1,v2)
 	return v1[1]*v2[1]+v1[2]*v2[2]+v1[3]*v2[3]
 end
 
 function cross(v1,v2)
-return {v1[2]*v2[3]-v1[3]*v2[2],v1[3]*v2[1]-v1[1]*v2[3],v1[1]*v2[2]-v1[2]*v2[1]}
+return v1[2]*v2[3]-v1[3]*v2[2],v1[3]*v2[1]-v1[1]*v2[3],v1[1]*v2[2]-v1[2]*v2[1]
 end
-
-function normalize(v,s)
-local l=s/sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3])
-return v[1]*l,v[2]*l,v[3]*l
+--
+--function normalize(v,s)
+--local l=s/sqrt(v[1]*v[1]+v[2]*v[2]+v[3]*v[3])
+--return {v[1]*l,v[2]*l,v[3]*l}
+--end
+function normalize(x,y,z)
+local l=1/sqrt(x*x+y*y+z*z)
+return {x*l,y*l,z*l}
 end
 
 --function cull(x1,y1,x2,y2,x3,y3,i)
@@ -2027,62 +2097,90 @@ return vs,vt
 end
 --function objdraw(o)
 function objdraw(vs,vt)
-tmap(vs,function(v,i)
+tmap(rolled and vs or {},function(v,i)
 v.s=i>2 and v[3]+vs[i-1][3]+vs[i-2][3] or v[3]
 --v.s=v[3]
 end)
 quicksort(vs,1,#vs)
-tmap(vs,function(v,i)
+--local lp={normalize({lpos.x,lpos.y,lpos.z},1)}
+--local lp={normalize({lpos.x,lpos.y,lpos.z},1)}
+local lp=normalize(lpos.x,lpos.y,lpos.z)
+local sl=vtxsl
+local zr=1
+local vi,pr,pl=view,prsp,lpal
+local tcol=toc(time()*20,4)%4*4
+--local tcol2=toc(time()*20,4)%2*4
+--stop(join({lp,lp2,lp3},' '))
+--tmap(vs,function(v,i)
+--for i,v in pairs(vs) do
+for i=1,#vs do 
+v=vs[i]
 if v.i>2 then
-local c=v[4]
-if band(v.i,1)==1 then
-v1,v2,v3=vt[v.i-2],vt[v.i-1],v
-else
-v1,v2,v3=v,vt[v.i-1],vt[v.i-2]
+--local c=v[4]
+local v1,v2,v3=v,vt[v.i-1],vt[v.i-2]
+if v.i&1==1 then
+v1,v3=v3,v1
+--v1,v2,v3=vt[v.i-2],vt[v.i-1],v
 end
-local l={lpos.x,lpos.y,lpos.z}
+--vdmp(pl)
 local x1,y1,z1=v1[1],v1[2],v1[3]
 local x2,y2,z2=v2[1],v2[2],v2[3]
 local x3,y3,z3=v3[1],v3[2],v3[3]
-local c,fp=light(
-lpal[c]
-,dot
-({normalize(l,1)}
-,{normalize(cross({normalize({x1-x3,y1-y3,z1-z3},1)},{normalize({x2-x3,y2-y3,z2-z3},1)}),1)}
+local c,fp
+if sl==v.i then
+c,fp=unpack({pl[v[4]]>>>tcol,0})
+else
+c,fp=light(
+pl[v[4]]
+,dot(
+lp
+,normalize(cross(
+normalize(x1-x3,y1-y3,z1-z3)
+,normalize(x2-x3,y2-y3,z2-z3)
 ))
-
-local cull=((x2-x1)*(y3-y1)-(x3-x1)*(y2-y1)<0 and culr or bnot(culr))>0
-if not cull then
-return
+))
 end
+--local c,fp=unpack({v[4],0})
+
+--,{normalize(
+--cross(
+--{normalize({x1-x3,y1-y3,z1-z3},1)}
+--,{normalize({x2-x3,y2-y3,z2-z3},1)}
+--),1)}
+--))
+
+--local cull=((x2-x1)*(y3-y1)-(x3-x1)*(y2-y1)<0 and culr or ~culr)>0
+local cull=(x2-x1)*(y3-y1)-(x3-x1)*(y2-y1)<0
+if cull then
 if fp then
-zr=8*64+prsp
+zr=8*64+pr
 local z1,z2,z3
-=zr/(view.z-z1+prsp)
-,zr/(view.z-z2+prsp)
-,zr/(view.z-z3+prsp)
+=zr/(vi.z-z1+pr)
+,zr/(vi.z-z2+pr)
+,zr/(vi.z-z3+pr)
 if bmch(vfilt,1) then
 pelogen_tri
-(x1*z1+view.x
-,y1*z1+view.y
-,x2*z2+view.x
-,y2*z2+view.y
-,x3*z3+view.x
-,y3*z3+view.y
+(x1*z1+vi.x
+,y1*z1+vi.y
+,x2*z2+vi.x
+,y2*z2+vi.y
+,x3*z3+vi.x
+,y3*z3+vi.y
 ,c,fp)
 else
-line(x1*z1+view.x
-,y1*z1+view.y
-,x2*z2+view.x
-,y2*z2+view.y,c)
-line(x3*z3+view.x
-,y3*z3+view.y)
-line(x1*z1+view.x
-,y1*z1+view.y)
+line(x1*z1+vi.x
+,y1*z1+vi.y
+,x2*z2+vi.x
+,y2*z2+vi.y,c)
+line(x3*z3+vi.x
+,y3*z3+vi.y)
+line(x1*z1+vi.x
+,y1*z1+vi.y)
 end
 end
 end
-end)
+end
+end
 
 
 end
@@ -2142,7 +2240,7 @@ if(t>b) l,t,r,b=r,b,l,t
 if(m>b) c,m,r,b=r,b,c,m
 local i,j,k,r=(c-l)/(m-t),(r-l)/(b-t),(r-c)/(b-m),l
 while t~=b do
-for t=flr(t),min(flr(m)-1,127) do
+for t=ceil(t),min(flr(m),127) do
 rectfill(l,t,r,t)
 r+=j
 l+=i
@@ -2199,30 +2297,30 @@ poke(0x5f39,0)
 
 
 __gfx__
-00000000000000000000000000000000007000000888880000000000000000000070000000700000007000007070000007070000077700007777000077770000
-00070000077777000077077000077700070777000877780000000000000000000000000007000000070000000707000070770000707700007077000077770000
-00b0c0000700070007000700000700000700007088b7c88000000000000000007000000070000000707000007070000077070000770700007777000077770000
-0b000c00070007000700070007070700070007008b000c8000000000000000000000000000070000070700000707000070700000777000007770000077770000
-0d605d00070007000700070007000700700007008d605d8000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0ddddd00077777007707700000777000077707008ddddd8000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000070008888888000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-000002480000288800008888000000000000000000000000000000001f111ff10070007000700070007000707070707007070707077707777777777777777777
-00010249011149991111999900000000000000000000000000000000ff10fff00000000007000700070007000707070770777077707770777077707777777777
-0012249a12229aaa2222aaaa00000000000000000000000000000000000000007000700070007000707070707070707077077707770777077777777777777777
-0013023b13333bbb3333bbbb00000000000000000000000000000000000000000000000000070007070707070707070770707070777077707770777077777777
-012401dc2444dccc4444cccc00000000000000000000000000000000000000000070007000700070007000707070707007070707077707777777777777777777
-0015015d15555ddd5555dddd00000000000000000000000000000000000000000000000007000700070007000707070770777077707770777077707777777777
-0156028e56668eee6666eeee00000000000000000000000000000000000000007000700070007000707070707070707077077707770777077777777777777777
-156724ef6777efff7777ffff00000000000000000000000000000000000000000000000000070007070707070707070770707070777077707770777077777777
-0000288e00000000000000000000000000000000686468a473957295719100008a648aa439952995199100000000000000000000000000000000000000000000
-0112499a0000000000000000000000000000000063a4a8a473757275000000003aa486a439752975000000000000000000000000000000000000000000000000
-122d9aa700000000000000000000000000000000a3a4a864937592750000000036a4866437752775000000000000000000000000000000000000000000000000
-133b3bb700000000000000000000000000000000a3646864929591970000000036648a6427951797000000000000000000000000000000000000000000000000
-244fdcc700000000000000000000000000000000636463a472977197000000003a643aa429971997000000000000000000000000000000000000000000000000
-15565dd600000000000000000000000000000000a362a3a27277717700000000366236a229771977000000000000000000000000000000000000000000000000
-56678eef000000000000000000000000000000009372937292779177000000003772377227771777000000000000000000000000000000000000000000000000
-6777eff7000000000000000000000000000000009395929591977171000000003795279517971971000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000077700008888800000000000000000000700000007000000070000070700000070700000777000077770000
+000f000000000000000000000000000000700000077f770008777800000000000000000000000000070000000700000007070000707700007077000070770000
+00f0f0000777770000770770000777000707770007f0f70088b7c880000000000000000070000000700000007070000070700000770700007707000077770000
+000f000007000700070007000007000007000070077f77008b000c80000000000000000000000000000700000707000007070000707000007770000077700000
+00e7e0000700070007000700070707000700070077e7e7708d605d80000000000000000000000000000000000000000000000000000000000000000000000000
+0e777e00070007000700070007000700700007007e777e708ddddd80000000000000000000000000000000000000000000000000000000000000000000000000
+0eeeee00077777007707700000777000077707007eeeee7088888880000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000070007777777000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000002480000288800008888000000000000000000000000000000001f111ff10000000000700070007000700070007070707070070707070777077777777777
+00010249011149991111999900000000000000000000000000000000ff10fff00000000000000000070007000700070007070707707770777077707770777077
+0012249a12229aaa2222aaaa00000000000000000000000000000000000000000000000070007000700070007070707070707070770777077707770777777777
+0123013b13333bbb3333bbbb00000000000000000000000000000000000000000000000000000000000700070707070707070707707070707770777077707770
+012401dc2444dccc4444cccc00000000000000000000000000000000000000000000000000700070007000700070007070707070070707070777077777777777
+0015015d15555ddd5555dddd00000000000000000000000000000000000000000000000000000000070007000700070007070707707770777077707770777077
+15d6248e56668eee6666eeee00000000000000000000000000000000000000000000000070007000700070007070707070707070770777077707770777777777
+156724ef6777efff7777ffff00000000000000000000000000000000000000000000000000000000000700070707070707070707707070707770777077707770
+0000288e00000248000024880000000000000000686468a473957295719100008a648aa439952995199100000000000000000000000000000000000000000000
+0112499a0001024900112499000000000000000063a4a8a473757275000000003aa486a439752975000000000000000000000000000000000000000000000000
+122d9aa70012249a012249aa0000000000000000a3a4a864937592750000000036a4866437752775000000000000000000000000000000000000000000000000
+133b3bb70013023b013323bb0000000000000000a3646864929591970000000036648a6427951797000000000000000000000000000000000000000000000000
+244fdcc7012401dc12441dcc0000000000000000636463a472977197000000003a643aa429971997000000000000000000000000000000000000000000000000
+15565dd60015015d015515dd0000000000000000a362a3a27277717700000000366236a229771977000000000000000000000000000000000000000000000000
+56678eef0156028e156628ee00000000000000009372937292779177000000003772377227771777000000000000000000000000000000000000000000000000
+6777eff7156724ef56774eff00000000000000009395929591977171000000003795279517971971000000000000000000000000000000000000000000000000
 000000000000000000000000000000000000000000000000000000000000000086a28662d775e775f777f9910000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000008aa28a62d975e975f97100000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000da648664d995e995000000000000000000000000000000000000000000000000
