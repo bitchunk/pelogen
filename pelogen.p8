@@ -3,7 +3,7 @@ version 32
 __lua__
 --pelogen lowpoly editor
 --@shiftalow/bitchunk
---ver 0.2.3
+--ver 0.2.3b
 --utils
 function tonorm(s)
 if tonum(s) then return tonum(s)
@@ -1262,7 +1262,7 @@ else
 llcnt=llcnt+1&0x7
 end
 lfrom,lto,lltxt=unpack(llpat[llcnt+1])
-
+llen=lto-lfrom+1
 --obj.rt=orot
 --obj.vt=vtxs
 
@@ -1474,6 +1474,7 @@ drsc[v].tra()
 end)
 --dbg(stat(1))
 isdebug=true
+dbg(llen)
 --dbg(bmch(vfilt,3,1))
 --dbg(vtxsl)
 --dbg(vcol)
@@ -1739,6 +1740,9 @@ end
 return v1,v2,v3,v4
 end
 
+-->8
+--for 3d render
+
 function plgn_load(ids)
 local ts={}
 tmap(ids,function(v,i)
@@ -1761,10 +1765,7 @@ end)
 vtxs=#ts>0 and ts or vtxs
 end
 
--->8
---for 3d render
-
---sort	
+--sort
 function quicksort(v,s,e)
 if(s>=e)return
 local p=s
@@ -1797,8 +1798,8 @@ return qprd(r1,-r2,-r3,-r4,qprd(q1,q2,q3,q4,r1,r2,r3,r4))
 end
 
 function light(c,r)
-local s=mid(r*llen,lfrom,lto)
-return c>>>flr(s)*4&0xff,rfp[mid(1,8,flr((s&0x.ffff)*7)+1)]
+local s=mid(r*llen+lfrom,lfrom,lto)
+return c>>>flr(s)*4&0xff,rfp[mid(0,7,flr((s&0x.ffff)*7))+1]
 end
 
 function dot(v1,v2)
@@ -1921,8 +1922,6 @@ end
 l,t,m,i=c,m,b,k
 end
 end
-
-
 -->8
 --export
 
